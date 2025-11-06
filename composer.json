@@ -1,12 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/react-starter-kit",
+    "name": "khawbzar/application",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": [
-        "laravel",
-        "framework"
-    ],
+    "description": "Khawbzar Rental Management System - A multi-tenant real estate property management application built with Laravel and React.",
+    "keywords": ["real-estate", "property-management", "multi-tenant", "laravel", "react"],
     "license": "MIT",
     "require": {
         "php": "^8.2",

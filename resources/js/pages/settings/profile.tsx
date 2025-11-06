@@ -12,21 +12,21 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Profile settings',
-        href: '/settings/profile',
-    },
-];
-
 type ProfileForm = {
     name: string;
     email: string;
 };
 
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
-    const { auth } = usePage<SharedData>().props;
-
+    const { auth, tenancy } = usePage<SharedData>().props;
+    const profileUpdateRoute = tenancy.initialized ? 'tenant.profile.update' : 'profile.update';
+    const profileEditRoute = tenancy.initialized ? 'tenant.profile.edit' : 'profile.edit';
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Profile settings',
+            href: route(profileEditRoute),
+        },
+    ];
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
         name: auth.user.name,
         email: auth.user.email,
@@ -35,7 +35,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        patch(route('profile.update'), {
+        patch(route(profileUpdateRoute), {
             preserveScroll: true,
         });
     };

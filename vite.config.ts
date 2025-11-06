@@ -15,16 +15,8 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
-        cors: {
-            origin: [
-                'http://scrubber.test',
-                'http://*.scrubber.test',
-                'http://rin-solutions.scrubber.test',
-                'http://localhost:5173',
-                'http://127.0.0.1:5173',
-            ],
-            credentials: true,
-        },
+        host: '0.0.0.0',
+        cors: true,
     },
     esbuild: {
         jsx: 'automatic',

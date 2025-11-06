@@ -1,20 +1,22 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 
 import AppearanceTabs from '@/components/appearance-tabs';
 import HeadingSmall from '@/components/heading-small';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type SharedData } from '@/types';
+import { route } from 'ziggy-js';
 
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Appearance settings',
-        href: '/settings/appearance',
-    },
-];
-
 export default function Appearance() {
+    const { tenancy } = usePage<SharedData>().props;
+    const appearanceRoute = tenancy.initialized ? 'tenant.appearance' : 'appearance';
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Appearance settings',
+            href: route(appearanceRoute),
+        },
+    ];
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Appearance settings" />

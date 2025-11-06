@@ -19,6 +19,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
     };
 
     const logoutRoute = tenancy.initialized ? 'tenant.logout' : 'logout';
+    const profileRoute = tenancy.initialized ? 'tenant.profile.edit' : 'profile.edit';
 
     return (
         <>
@@ -30,7 +31,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
-                    <Link className="block w-full" href={route('profile.edit')} as="button" prefetch onClick={cleanup}>
+                    <Link className="block w-full" href={route(profileRoute)} as="button" prefetch onClick={cleanup}>
                         <Settings className="mr-2" />
                         Settings
                     </Link>

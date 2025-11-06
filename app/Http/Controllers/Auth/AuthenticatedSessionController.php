@@ -37,7 +37,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redirect to appropriate dashboard based on tenancy context
+        return redirect()->intended(route(tenancy()->initialized ? 'tenant.dashboard' : 'dashboard', absolute: false));
     }
 
     /**
