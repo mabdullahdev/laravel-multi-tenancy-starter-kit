@@ -33,6 +33,7 @@ yarn-error.log
 /storage/framework/views
 /storage/logs
 /bootstrap/cache
+/storage/tenant/*
 
 # OS generated files
 .DS_Store

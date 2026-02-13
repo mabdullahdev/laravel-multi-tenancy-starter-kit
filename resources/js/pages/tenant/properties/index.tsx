@@ -3,12 +3,11 @@ import { Head, Link } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Home, MapPin, Bed, Bath, Square, Plus, Search, Filter } from 'lucide-react';
+import { Home, Plus, Search, Filter } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -61,20 +60,6 @@ export default function PropertiesPage({ properties: initialProperties }: Props)
 
         return matchesSearch && matchesType && matchesStatus;
     });
-
-    const getStatusBadgeVariant = (status: Property['status']) => {
-        switch (status) {
-            case 'available':
-                return 'default';
-            case 'pending':
-                return 'secondary';
-            case 'sold':
-            case 'rented':
-                return 'outline';
-            default:
-                return 'default';
-        }
-    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -147,77 +132,53 @@ export default function PropertiesPage({ properties: initialProperties }: Props)
                 </div>
 
                 {filteredProperties.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredProperties.map((property) => (
-                            <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                                <div className="aspect-video bg-muted flex items-center justify-center">
-                                    {property.image_url ? (
-                                        <img
-                                            src={property.image_url}
-                                            alt={property.address}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <Home className="h-12 w-12 text-muted-foreground" />
-                                    )}
-                                </div>
-                                <CardHeader>
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="flex-1">
-                                            <CardTitle className="text-lg mb-1">
-                                                {property.formatted_price || 'Price on Request'}
-                                            </CardTitle>
-                                            <CardDescription className="flex items-center gap-1 mt-1">
-                                                <MapPin className="h-3 w-3" />
-                                                {property.address}, {property.city}
-                                                {property.province && `, ${property.province}`}
-                                                {property.postal_code && ` ${property.postal_code}`}
-                                            </CardDescription>
-                                        </div>
-                                        <Badge variant={property.type === 'rental' ? 'secondary' : 'default'}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {filteredProperties.map((property) => {
+                            const stats = [
+                                `${property.bedrooms} ${property.bedrooms === 1 ? 'bed' : 'beds'}`,
+                                property.bathrooms != null && `${property.bathrooms} ${property.bathrooms === 1 ? 'bath' : 'baths'}`,
+                                property.square_feet != null && `${property.square_feet.toLocaleString()} sq ft`,
+                            ].filter(Boolean) as string[];
+                            return (
+                                <Link
+                                    key={property.id}
+                                    href={route('tenant.properties.show', property.id)}
+                                    className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-card hover:shadow-md transition-shadow text-left"
+                                >
+                                    <div className="aspect-[4/3] bg-muted flex items-center justify-center relative overflow-hidden">
+                                        {property.image_url ? (
+                                            <img
+                                                src={property.image_url}
+                                                alt={property.address}
+                                                className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
+                                            />
+                                        ) : (
+                                            <Home className="h-12 w-12 text-muted-foreground" />
+                                        )}
+                                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md text-xs font-medium bg-background/90 text-foreground capitalize">
                                             {property.type === 'rental' ? 'Rent' : 'Sale'}
-                                        </Badge>
+                                        </span>
                                     </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                            <div className="flex items-center gap-1">
-                                                <Bed className="h-4 w-4" />
-                                                {property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}
-                                            </div>
-                                            {property.bathrooms && (
-                                                <div className="flex items-center gap-1">
-                                                    <Bath className="h-4 w-4" />
-                                                    {property.bathrooms} {property.bathrooms === 1 ? 'Bath' : 'Baths'}
-                                                </div>
-                                            )}
-                                            {property.square_feet && (
-                                                <div className="flex items-center gap-1">
-                                                    <Square className="h-4 w-4" />
-                                                    {property.square_feet.toLocaleString()} sq ft
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        {property.description && (
-                                            <p className="text-sm text-muted-foreground line-clamp-2">
-                                                {property.description}
+                                    <div className="p-4 flex flex-col flex-1">
+                                        <p className="font-semibold text-foreground">
+                                            {property.formatted_price || 'Price on request'}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
+                                            {property.address}, {property.city}
+                                            {property.province && `, ${property.province}`}
+                                        </p>
+                                        {stats.length > 0 && (
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                {stats.join(' · ')}
                                             </p>
                                         )}
-                                        
-                                        <div className="flex items-center justify-between pt-2">
-                                            <Badge variant={getStatusBadgeVariant(property.status)}>
-                                                {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
-                                            </Badge>
-                                            <Button variant="outline" size="sm" className="cursor-pointer">
-                                                View Details
-                                            </Button>
-                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-2 capitalize">
+                                            {property.status}
+                                        </p>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                </Link>
+                            );
+                        })}
                     </div>
                 ) : (
                     <Card>
