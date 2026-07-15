@@ -22,6 +22,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     protected $fillable = [
         'id',
         'data',
+        // Virtual columns (packed into `data` by VirtualColumn) — must be
+        // fillable or mass assignment silently drops them.
+        'owner_name',
+        'owner_email',
+        'owner_cellphone',
     ];
 
     /**

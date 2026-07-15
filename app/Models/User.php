@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Notifications\TenantResetPassword;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Auth\Notifications\ResetPassword as DefaultResetPassword;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -68,4 +70,21 @@ class User extends Authenticatable
             }
         });
     }
+    
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        if (tenancy()->initialized) {
+            $this->notify(new TenantResetPassword($token));
+
+            return;
+        }
+
+        $this->notify(new DefaultResetPassword($token));
+    }   
 }

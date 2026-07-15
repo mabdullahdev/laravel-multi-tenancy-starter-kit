@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\User;
 use App\Helpers\TenantOwnerLogger;
+use App\Events\TenantOwnerProvisioned;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -25,53 +26,47 @@ class CreateTenantOwner implements ShouldQueue
 
     public function handle()
     {
-        // Switch to central database to load owner data
-        $ownerData = tenancy()->central(function () {
-            \Log::info('In central context', [
-                'tenant_id' => $this->tenant->id,
-                'database_connection' => \DB::connection()->getName(),
-                'tenant_owners_count' => \App\Models\TenantOwner::count(),
-                'all_tenant_owners' => \App\Models\TenantOwner::all()->toArray()
-            ]);
-            
-            $freshTenant = $this->tenant->fresh();
-            \Log::info('Fresh tenant data', [
-                'tenant_data' => $freshTenant->toArray(),
-                'owner_relationship' => $freshTenant->owner
-            ]);
-            
-            return $freshTenant->owner;
-        });
-        
-        if (!$ownerData) {
+        // Owner fields are VirtualColumn attributes: on save they're packed into the
+        // `data` column, but after retrieval they're decoded back onto the model and
+        // `data` is reset to null. So read them directly, not via `->data`.
+        $ownerName = $this->tenant->owner_name;
+        $ownerEmail = $this->tenant->owner_email;
+
+        TenantOwnerLogger::info(
+            ['tenant_id' => $this->tenant->id, 'owner_name' => $ownerName, 'owner_email' => $ownerEmail],
+            "Creating tenant owner in tenant context and here is data"
+        );
+
+        if (!$ownerEmail) {
             TenantOwnerLogger::warning($this->tenant->id, "No owner data found");
             return;
         }
 
-        // Log the start of owner creation
-        TenantOwnerLogger::start($this->tenant->id, "Creating tenant owner: {$ownerData->name} ({$ownerData->email})");
-
         try {
             // Create the owner user in the TENANT database context
-            $owner = $this->tenant->run(function () use ($ownerData) {
+            $owner = $this->tenant->run(function () use ($ownerName, $ownerEmail) {
                 return User::firstOrCreate(
-                    [ 'email' => $ownerData->email ],
+                    [ 'email' => $ownerEmail ],
                     [
-                        'name' => $ownerData->name,
-                        'password' => $ownerData->password, // Already hashed
+                        'name' => $ownerName,
                         'email_verified_at' => now(),
                     ]
                 );
             });
 
-
+            event(new TenantOwnerProvisioned(
+                tenantId: (string) $this->tenant->id,
+                userId: (int) $owner->id,
+                email: (string) $owner->email,
+                wasRecentlyCreated: (bool) $owner->wasRecentlyCreated,
+            ));
 
             // Log successful owner creation
             TenantOwnerLogger::success($this->tenant->id, $owner->id, $owner->email);
 
         } catch (\Exception $e) {
             TenantOwnerLogger::failure($this->tenant->id, $e->getMessage(), [
-                'owner_email' => $ownerData->email ?? 'unknown'
+                'owner_email' => $ownerEmail ?? 'unknown'
             ]);
             
             // Re-throw the exception so the job fails

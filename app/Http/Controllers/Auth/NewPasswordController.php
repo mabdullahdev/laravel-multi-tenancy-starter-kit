@@ -25,6 +25,8 @@ class NewPasswordController extends Controller
         return Inertia::render('auth/reset-password', [
             'email' => $request->email,
             'token' => $request->route('token'),
+            // Tenant auth uses prefixed route names; posting to central `password.store` causes 419 (wrong host/session).
+            'passwordStoreRoute' => tenancy()->initialized ? 'tenant.password.store' : 'password.store',
         ]);
     }
 
@@ -60,7 +62,9 @@ class NewPasswordController extends Controller
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
         if ($status == Password::PasswordReset) {
-            return to_route('login')->with('status', __($status));
+            $loginRoute = tenancy()->initialized ? 'tenant.login' : 'login';
+
+            return to_route($loginRoute)->with('status', __($status));
         }
 
         throw ValidationException::withMessages([

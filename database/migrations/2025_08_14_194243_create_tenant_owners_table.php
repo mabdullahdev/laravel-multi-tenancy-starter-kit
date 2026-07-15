@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('tenant_id'); // References tenants.id (no foreign key constraint)
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('password')->nullable(); // Encrypted password
+            $table->string('cellphone')->nullable();
             $table->timestamps();
             
             // Add index for performance (no foreign key constraint)

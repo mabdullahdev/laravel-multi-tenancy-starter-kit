@@ -7,6 +7,25 @@ import { type BreadcrumbItem } from "@/types";
 import { Head, useForm } from "@inertiajs/react";
 import { ArrowLeft, Plus } from "lucide-react";
 
+/** Display as +92 000 0000000 (10 national digits after country code 92). */
+function formatPakistanCellphoneDisplay(input: string): string {
+    const digits = input.replace(/\D/g, "");
+    let national = digits;
+    if (national.startsWith("92")) {
+        national = national.slice(2);
+    }
+    if (national.startsWith("0")) {
+        national = national.slice(1);
+    }
+    national = national.slice(0, 10);
+    if (national.length === 0) {
+        return "";
+    }
+    const first = national.slice(0, 3);
+    const rest = national.slice(3);
+    return rest.length > 0 ? `+92 ${first} ${rest}` : `+92 ${first}`;
+}
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Tenants',
@@ -22,11 +41,9 @@ export default function CreateTenant() {
     const { data, setData, post, processing, errors } = useForm({
         id: '',
         domain: '',
-        data: {},
         owner_name: '',
         owner_email: '',
-        owner_password: '',
-        owner_password_confirmation: '',
+        owner_cellphone: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -103,28 +120,6 @@ export default function CreateTenant() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="data">Additional Data (Optional)</Label>
-                                    <textarea
-                                        id="data"
-                                        value={JSON.stringify(data.data, null, 2)}
-                                        onChange={(e) => {
-                                            try {
-                                                const parsed = JSON.parse(e.target.value);
-                                                setData('data', parsed);
-                                            } catch {
-                                                // If JSON is invalid, don't update
-                                            }
-                                        }}
-                                        placeholder='{"name": "Acme Corp", "plan": "premium"}'
-                                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
-                                        rows={4}
-                                    />
-                                    <p className="text-sm text-muted-foreground">
-                                        Additional metadata for the tenant in JSON format.
-                                    </p>
-                                </div>
-
-                                <div className="space-y-2">
                                     <Label htmlFor="owner_name">Owner Name</Label>
                                     <Input
                                         id="owner_name"
@@ -133,7 +128,7 @@ export default function CreateTenant() {
                                         onChange={(e) => setData('owner_name', e.target.value)}
                                         placeholder="Enter owner's full name"
                                         className={errors.owner_name ? 'border-red-500' : ''}
-                                        autoComplete="name"
+                                        autoComplete="off"
                                     />
                                     {errors.owner_name && (
                                         <p className="text-sm text-red-500">{errors.owner_name}</p>
@@ -149,43 +144,36 @@ export default function CreateTenant() {
                                         onChange={(e) => setData('owner_email', e.target.value)}
                                         placeholder="Enter owner's email address"
                                         className={errors.owner_email ? 'border-red-500' : ''}
-                                        autoComplete="email"
+                                        autoComplete="off"
                                     />
                                     {errors.owner_email && (
                                         <p className="text-sm text-red-500">{errors.owner_email}</p>
                                     )}
+                                    <p className="text-sm text-muted-foreground">
+                                        The owner will receive an email to set their password after tenant provisioning completes.
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="owner_password">Owner Password</Label>
+                                    <Label htmlFor="owner_cellphone">Owner Cellphone</Label>
                                     <Input
-                                        id="owner_password"
-                                        type="password"
-                                        value={data.owner_password}
-                                        onChange={(e) => setData('owner_password', e.target.value)}
-                                        placeholder="Enter a secure password"
-                                        className={errors.owner_password ? 'border-red-500' : ''}
-                                        autoComplete="new-password"
+                                        id="owner_cellphone"
+                                        type="text"
+                                        inputMode="numeric"
+                                        autoComplete="tel"
+                                        value={data.owner_cellphone}
+                                        onChange={(e) =>
+                                            setData("owner_cellphone", formatPakistanCellphoneDisplay(e.target.value))
+                                        }
+                                        placeholder="+92 300 1234567"
+                                        className={errors.owner_cellphone ? "border-red-500" : ""}
                                     />
-                                    {errors.owner_password && (
-                                        <p className="text-sm text-red-500">{errors.owner_password}</p>
+                                    {errors.owner_cellphone && (
+                                        <p className="text-sm text-red-500">{errors.owner_cellphone}</p>
                                     )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="owner_password_confirmation">Confirm Password</Label>
-                                    <Input
-                                        id="owner_password_confirmation"
-                                        type="password"
-                                        value={data.owner_password_confirmation}
-                                        onChange={(e) => setData('owner_password_confirmation', e.target.value)}
-                                        placeholder="Confirm the password"
-                                        className={errors.owner_password_confirmation ? 'border-red-500' : ''}
-                                        autoComplete="new-password"
-                                    />
-                                    {errors.owner_password_confirmation && (
-                                        <p className="text-sm text-red-500">{errors.owner_password_confirmation}</p>
-                                    )}
+                                    <p className="text-sm text-muted-foreground">
+                                        Format: +92 followed by 10 digits (e.g. +92 300 1234567).
+                                    </p>
                                 </div>
 
                                 <div className="flex gap-4">

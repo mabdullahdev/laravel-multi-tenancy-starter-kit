@@ -16,16 +16,7 @@ class TenantOwner extends Model
         'tenant_id',
         'name',
         'email',
-        'password',
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
+        'cellphone',
     ];
 
     /**

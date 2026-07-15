@@ -43,8 +43,7 @@ class TenantController extends Controller
             'domain' => 'required|string|unique:domains,domain,' . $fullDomain,
             'owner_name' => 'required|string|max:255',
             'owner_email' => 'required|email|max:255',
-            'owner_password' => 'required|string|min:8|confirmed',
-            'owner_password_confirmation' => 'required|string',
+            'owner_cellphone' => 'required|string',
         ]);
 
         // 1) Create owner first in central DB
@@ -52,28 +51,31 @@ class TenantController extends Controller
             'tenant_id' => $request->id,
             'name' => $request->owner_name,
             'email' => $request->owner_email,
-            'password' => Hash::make($request->owner_password),
+            'cellphone' => $request->owner_cellphone,
         ]);
 
-        // 2) Create tenant (this triggers the tenancy pipeline)
-        $tenant = Tenant::create([
-            'id' => $request->id,
-        ]);
-        
-        // Debug: Confirm owner exists before pipeline jobs run
-        \Log::info('Tenant owner pre-created (before pipeline)', [
-            'tenant_id' => $request->id,
-            'owner_id' => $owner->id,
-            'owner_email' => $owner->email,
-        ]);
-        
-        // Double check: Query the table directly
-        $checkOwner = \App\Models\TenantOwner::where('tenant_id', $tenant->id)->first();
-        \Log::info('Direct query check', [
-            'found_owner' => $checkOwner ? $checkOwner->toArray() : null
-        ]);
-        
-        $tenant->domains()->create(['domain' => $fullDomain]);
+        // 2) Create tenant (this triggers the tenancy pipeline) and attach its domain.
+        // Not wrapped in a DB transaction: Tenant::create() physically creates the tenant
+        // database (DDL auto-commits) and dispatches queued side effects that a rollback
+        // can't undo. Instead, compensate by deleting the tenant (drops its database) and
+        // the central owner row if anything after the owner insert fails.
+        try {
+            $tenant = Tenant::create([
+                'id' => $request->id,
+                'owner_name' => $request->owner_name,
+                'owner_email' => $request->owner_email,
+                'owner_cellphone' => $request->owner_cellphone,
+            ]);
+
+            $tenant->domains()->create(['domain' => $fullDomain]);
+        } catch (\Throwable $e) {
+            if (isset($tenant)) {
+                $tenant->delete(); // fires TenantDeleted → drops the tenant database
+            }
+            $owner->delete();
+
+            throw $e;
+        }
 
         return redirect()->route('tenants')->with('success', 'Tenant and domain created successfully.');
     }

@@ -11,6 +11,8 @@ import AuthLayout from '@/layouts/auth-layout';
 interface ResetPasswordProps {
     token: string;
     email: string;
+    /** Central vs tenant auth route name for POST (avoids cross-domain CSRF 419). */
+    passwordStoreRoute?: string;
 }
 
 type ResetPasswordForm = {
@@ -20,7 +22,7 @@ type ResetPasswordForm = {
     password_confirmation: string;
 };
 
-export default function ResetPassword({ token, email }: ResetPasswordProps) {
+export default function ResetPassword({ token, email, passwordStoreRoute = 'password.store' }: ResetPasswordProps) {
     const { data, setData, post, processing, errors, reset } = useForm<Required<ResetPasswordForm>>({
         token: token,
         email: email,
@@ -30,7 +32,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('password.store'), {
+        post(route(passwordStoreRoute), {
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };

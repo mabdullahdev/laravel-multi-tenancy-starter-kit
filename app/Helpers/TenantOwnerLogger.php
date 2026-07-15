@@ -7,6 +7,14 @@ use Illuminate\Support\Facades\Log;
 class TenantOwnerLogger
 {
     /**
+     * Log tenant owner creation info
+     */
+    public static function info(array $data, string $message): void
+    {
+        Log::channel('tenant_owner')->info($message, $data);
+    }
+
+    /**
      * Log tenant owner creation success
      */
     public static function success(string $tenantId, int $ownerId, string $ownerEmail): void
