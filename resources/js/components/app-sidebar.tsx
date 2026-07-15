@@ -3,7 +3,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid, Building2, Home } from 'lucide-react';
+import { LayoutGrid, Building2, Home, Users, FolderKanban } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const centralNavItems: NavItem[] = [
@@ -16,6 +16,16 @@ const centralNavItems: NavItem[] = [
         title: 'Tenants',
         href: '/tenants',
         icon: Building2,
+    },
+    {
+        title: 'Clients',
+        href: '/clients',
+        icon: Users,
+    },
+    {
+        title: 'Projects',
+        href: '/projects',
+        icon: FolderKanban,
     },
 ];
 

@@ -20,5 +20,9 @@ class DatabaseSeeder extends Seeder
             'email' => env('CENTRAL_OWNER_EMAIL', 'owner@example.com'),
             'password' => env('CENTRAL_OWNER_PASSWORD', 'password'),
         ]);
+
+        $this->call([
+            BoqExampleSeeder::class,
+        ]);
     }
 }
