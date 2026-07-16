@@ -172,7 +172,7 @@ class BoqController extends Controller
 
         $logo = public_path('logo.svg');
 
-        $validityDays = 30;
+        $validityDays = 7;
 
         $html = view('pdf.boq', [
             'boq' => $this->transformBoq($boq),

@@ -22,8 +22,12 @@ class StorePaymentRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Cap the payment at the outstanding balance so total paid can never
+        // exceed the BOQ total.
+        $due = (float) $this->route('boq')->balance_due;
+
         return [
-            'amount' => ['required', 'numeric', 'min:0.01'],
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:' . $due],
             'paid_on' => ['required', 'date'],
             'method' => ['required', Rule::in(['cash', 'bank_transfer', 'cheque', 'online', 'other'])],
             'reference' => ['nullable', 'string', 'max:255'],
@@ -38,9 +42,13 @@ class StorePaymentRequest extends FormRequest
      */
     public function messages(): array
     {
+        $boq = $this->route('boq');
+
         return [
             'amount.required' => 'Enter the amount received.',
             'amount.min' => 'The amount must be greater than zero.',
+            'amount.max' => 'The amount exceeds the outstanding balance of '
+                . $boq->currency . ' ' . number_format((float) $boq->balance_due, 2) . '.',
             'paid_on.required' => 'Enter the date the payment was received.',
         ];
     }

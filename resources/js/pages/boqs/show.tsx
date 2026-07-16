@@ -121,6 +121,9 @@ export default function BoqShow({ boq, payments, paymentSummary }: Props) {
         router.delete(route('payments.destroy', payment.id), { preserveScroll: true });
 
     const status = statusMeta[paymentSummary.status] ?? statusMeta.unpaid;
+    const isFinalized = boq.status === 'finalized';
+    const due = typeof paymentSummary.due === 'string' ? parseFloat(paymentSummary.due) : paymentSummary.due;
+    const canRecord = isFinalized && due > 0;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -277,7 +280,21 @@ export default function BoqShow({ boq, payments, paymentSummary }: Props) {
                             </div>
                         </div>
 
-                        {/* Record a payment */}
+                        {/* Record a payment — only for a finalized BOQ with a balance */}
+                        {!isFinalized ? (
+                            <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+                                Payments can only be recorded once this BOQ is{' '}
+                                <span className="font-medium text-foreground">finalized</span>. Change its status in the{' '}
+                                <Link href={route('boqs.edit', boq.id)} className="text-primary underline">
+                                    builder
+                                </Link>
+                                .
+                            </div>
+                        ) : due <= 0 ? (
+                            <div className="rounded-lg border border-dashed p-4 text-center text-sm font-medium text-green-600 dark:text-green-500">
+                                This BOQ is fully paid.
+                            </div>
+                        ) : (
                         <form onSubmit={recordPayment} className="grid gap-3 rounded-lg border p-3 sm:grid-cols-6 sm:items-end">
                             <div className="space-y-1 sm:col-span-1">
                                 <Label htmlFor="amount">Amount *</Label>
@@ -286,6 +303,7 @@ export default function BoqShow({ boq, payments, paymentSummary }: Props) {
                                     type="number"
                                     step="any"
                                     min="0"
+                                    max={due}
                                     value={data.amount}
                                     onChange={(e) => setData('amount', e.target.value)}
                                     placeholder="0.00"
@@ -342,7 +360,11 @@ export default function BoqShow({ boq, payments, paymentSummary }: Props) {
                                 </Button>
                             </div>
                             {errors.amount && <p className="text-sm text-red-500 sm:col-span-6">{errors.amount}</p>}
+                            <p className="text-xs text-muted-foreground sm:col-span-6">
+                                Outstanding balance: {money(paymentSummary.due, boq.currency)}. A receipt will be emailed to the client.
+                            </p>
                         </form>
+                        )}
 
                         {/* Payment history */}
                         {payments.length === 0 ? (
