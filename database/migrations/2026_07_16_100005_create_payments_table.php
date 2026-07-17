@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('boq_id')->constrained('boqs')->onDelete('cascade');
+
+            // A payment settles the commercial agreement, not the estimate. The BOQ
+            // is what the work is expected to cost; the contract is what the client
+            // agreed to pay, so that is what a receipt is against.
+            $table->foreignId('contract_id')->constrained('contracts')->onDelete('cascade');
+
+            // Optionally the stage this payment was against ("30% on lenter"). Null
+            // for an ad-hoc payment that doesn't line up with the schedule.
+            $table->foreignId('contract_milestone_id')->nullable()->constrained('contract_milestones')->nullOnDelete();
+
             $table->decimal('amount', 15, 2); // Amount received
             $table->date('paid_on'); // When the payment was received
             $table->enum('method', ['cash', 'bank_transfer', 'cheque', 'online', 'other'])->default('cash');
@@ -21,7 +30,7 @@ return new class extends Migration
             $table->string('note')->nullable(); // e.g. "Advance", "Plinth stage"
             $table->timestamps();
 
-            $table->index('boq_id');
+            $table->index('contract_id');
         });
     }
 

@@ -42,35 +42,11 @@ class BoqController extends Controller
      */
     public function show(Boq $boq)
     {
-        $boq->load(['project.client', 'sections.items', 'payments']);
+        $boq->load(['project.client', 'sections.items']);
 
         return inertia('boqs/show', [
             'boq' => $this->transformBoq($boq),
-            'payments' => $boq->payments->map(fn (\App\Models\Payment $p) => [
-                'id' => $p->id,
-                'amount' => $p->amount,
-                'paid_on' => $p->paid_on->format('Y-m-d'),
-                'method' => $p->method,
-                'reference' => $p->reference,
-                'note' => $p->note,
-            ])->values()->all(),
-            'paymentSummary' => $this->paymentSummary($boq),
         ]);
-    }
-
-    /**
-     * Total / paid / due / status figures for a BOQ.
-     *
-     * @return array<string, mixed>
-     */
-    private function paymentSummary(Boq $boq): array
-    {
-        return [
-            'total' => $boq->total_amount,
-            'paid' => $boq->total_paid,
-            'due' => $boq->balance_due,
-            'status' => $boq->payment_status,
-        ];
     }
 
     /**
@@ -101,7 +77,6 @@ class BoqController extends Controller
                 'title' => $validated['title'],
                 'currency' => $validated['currency'] ?? $boq->currency,
                 'status' => $validated['status'],
-                'payment_terms' => $validated['payment_terms'] ?? null,
                 'notes' => $validated['notes'] ?? null,
             ]);
 
@@ -168,20 +143,18 @@ class BoqController extends Controller
      */
     public function pdf(Boq $boq): Response
     {
-        $boq->load(['project.client', 'sections.items', 'payments']);
+        $boq->load(['project.client', 'sections.items']);
 
         $logo = public_path('logo.svg');
 
-        $validityDays = 7;
-
+        // No payment summary and no validity: money is settled against the contract,
+        // not the BOQ. This document is the internal cost plan — there is no price
+        // here for the client to accept, so nothing expires.
         $html = view('pdf.boq', [
             'boq' => $this->transformBoq($boq),
             'companyName' => config('app.name'),
             'logoPath' => is_file($logo) ? $logo : null,
             'generatedAt' => now()->format('d M Y'),
-            'validUntil' => now()->addDays($validityDays)->format('d M Y'),
-            'validityDays' => $validityDays,
-            'payment' => $this->paymentSummary($boq),
         ])->render();
 
         $mpdf = new \Mpdf\Mpdf([
@@ -233,7 +206,6 @@ class BoqController extends Controller
             'currency' => $boq->currency,
             'status' => $boq->status,
             'total_amount' => $boq->total_amount,
-            'payment_terms' => $boq->payment_terms ?? '',
             'notes' => $boq->notes ?? '',
             'project' => [
                 'id' => $boq->project->id,

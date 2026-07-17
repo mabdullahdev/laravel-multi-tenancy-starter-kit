@@ -105,12 +105,6 @@
         <td class="label">Date</td>
         <td class="value">{{ $generatedAt }}</td>
     </tr>
-    <tr>
-        <td class="label">Valid Until</td>
-        <td class="value">{{ $validUntil }}</td>
-        <td class="label"></td>
-        <td class="value"></td>
-    </tr>
 </table>
 
 {{-- Sections --}}
@@ -187,13 +181,6 @@
     </tr>
 </table>
 
-@if(!empty($boq['payment_terms']))
-    <div class="terms">
-        <div class="terms-label">Payment Terms</div>
-        {!! nl2br(e($boq['payment_terms'])) !!}
-    </div>
-@endif
-
 @if(!empty($boq['notes']))
     <div class="notes">
         <div class="notes-label">Notes</div>
@@ -202,8 +189,8 @@
 @endif
 
 <div class="validity-note">
-    This quotation is valid for {{ $validityDays }} days from the date of issue (until {{ $validUntil }}).
-    Prices are subject to revision thereafter.
+    Internal cost estimate. This is not a quotation and does not constitute an offer or a price to the client —
+    what the client owes is set by the contract.
 </div>
 
 </body>

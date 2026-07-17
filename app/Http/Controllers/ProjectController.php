@@ -60,14 +60,44 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
-        $project->load(['client', 'boqs' => fn ($q) => $q->orderByDesc('revision')]);
+        $project->load([
+            'client',
+            'boqs' => fn ($q) => $q->orderByDesc('revision'),
+            'contracts' => fn ($q) => $q->orderBy('signed_on')->orderBy('id'),
+            'contracts.addons',
+        ]);
 
         return inertia('projects/show', [
             'project' => [
                 'id' => $project->id,
                 'name' => $project->name,
                 'location' => $project->location,
+                'covered_area_sqft' => $project->covered_area_sqft,
                 'status' => $project->status,
+                // Revenue for the project is the sum of every contract signed on it.
+                'contracts_total' => (string) $project->contracts->sum('contract_amount'),
+                'contracts' => $project->contracts->map(fn ($contract) => [
+                    'id' => $contract->id,
+                    'title' => $contract->title,
+                    'type' => $contract->type,
+                    'billable_area_sqft' => $contract->billable_area_sqft,
+                    'rate_per_sqft' => $contract->rate_per_sqft,
+                    'quality_tier' => $contract->quality_tier,
+                    'base_amount' => $contract->base_amount,
+                    'addons_amount' => $contract->addons_amount,
+                    'contract_amount' => $contract->contract_amount,
+                    'currency' => $contract->currency,
+                    'signed_on' => $contract->signed_on?->format('Y-m-d'),
+                    'status' => $contract->status,
+                    'addons' => $contract->addons->map(fn ($addon) => [
+                        'id' => $addon->id,
+                        'name' => $addon->name,
+                        'unit' => $addon->unit,
+                        'quantity' => $addon->quantity,
+                        'rate' => $addon->rate,
+                        'amount' => $addon->amount,
+                    ])->values()->all(),
+                ])->values()->all(),
                 'client' => [
                     'id' => $project->client->id,
                     'name' => $project->client->name,
@@ -98,6 +128,7 @@ class ProjectController extends Controller
                 'client_id' => (string) $project->client_id,
                 'name' => $project->name,
                 'location' => $project->location ?? '',
+                'covered_area_sqft' => $project->covered_area_sqft !== null ? (string) $project->covered_area_sqft : '',
                 'status' => $project->status,
             ],
             'clients' => $this->clientOptions(),

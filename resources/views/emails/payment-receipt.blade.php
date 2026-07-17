@@ -20,7 +20,7 @@
                             <p style="margin:0 0 16px; font-size:15px;">Dear {{ $client->name }},</p>
                             <p style="margin:0 0 20px; font-size:14px; line-height:1.5; color:#374151;">
                                 Thank you. We have received your payment for
-                                <strong>{{ $project->name }}</strong> ({{ $boq->title }}, Rev {{ $boq->revision }}).
+                                <strong>{{ $project->name }}</strong> ({{ $contract->title }}@if ($milestone) — {{ $milestone->name }}@endif).
                                 A formal receipt is attached to this email.
                             </p>
 

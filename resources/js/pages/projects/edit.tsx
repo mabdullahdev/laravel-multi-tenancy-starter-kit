@@ -21,6 +21,7 @@ export default function EditProject({ project, clients }: Props) {
         client_id: project.client_id,
         name: project.name,
         location: project.location,
+        covered_area_sqft: project.covered_area_sqft,
         status: project.status,
     });
 

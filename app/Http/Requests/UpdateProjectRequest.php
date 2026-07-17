@@ -26,6 +26,7 @@ class UpdateProjectRequest extends FormRequest
             'client_id' => ['required', 'integer', 'exists:clients,id'],
             'name' => ['required', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
+            'covered_area_sqft' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', Rule::in(['draft', 'active', 'completed', 'archived'])],
         ];
     }

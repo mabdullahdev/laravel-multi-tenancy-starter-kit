@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePaymentRequest;
 use App\Mail\PaymentReceiptMail;
-use App\Models\Boq;
+use App\Models\Contract;
+use App\Models\ContractMilestone;
 use App\Models\Payment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
@@ -13,28 +14,50 @@ use Illuminate\Support\Facades\Mail;
 class PaymentController extends Controller
 {
     /**
-     * Record a payment received against a BOQ.
+     * Record a payment received against a contract.
      */
-    public function store(StorePaymentRequest $request, Boq $boq): RedirectResponse
+    public function store(StorePaymentRequest $request, Contract $contract): RedirectResponse
     {
-        // Payments can only be recorded against a finalized BOQ.
-        if ($boq->status !== 'finalized') {
+        // A draft contract has not been agreed with the client yet, so there is
+        // nothing for a payment to settle.
+        if ($contract->status === 'draft') {
             return back()->withErrors([
-                'amount' => 'Payments can only be recorded once the BOQ is finalized.',
+                'amount' => 'Payments can only be recorded once the contract is active.',
             ]);
         }
 
-        $payment = $boq->payments()->create($request->validated());
+        $payment = $contract->payments()->create($request->validated());
 
-        return back()->with('success', $this->emailReceipt($boq, $payment));
+        $this->settleMilestone($payment);
+
+        return back()->with('success', $this->emailReceipt($contract, $payment));
+    }
+
+    /**
+     * Mark a milestone paid once its payments cover its amount.
+     */
+    private function settleMilestone(Payment $payment): void
+    {
+        $milestone = $payment->milestone;
+
+        if (! $milestone) {
+            return;
+        }
+
+        // Within a paisa of the amount counts as settled.
+        $paid = (float) $milestone->payments()->sum('amount');
+
+        if ($paid + 0.01 >= (float) $milestone->amount) {
+            $milestone->update(['status' => 'paid']);
+        }
     }
 
     /**
      * Email a receipt copy to the client and return a status message.
      */
-    private function emailReceipt(Boq $boq, Payment $payment): string
+    private function emailReceipt(Contract $contract, Payment $payment): string
     {
-        $client = $boq->project?->client;
+        $client = $contract->project?->client;
 
         if (! $client || ! $client->email) {
             return 'Payment recorded. No client email on file, so no receipt was sent.';
@@ -59,8 +82,27 @@ class PaymentController extends Controller
      */
     public function destroy(Payment $payment): RedirectResponse
     {
+        $milestone = $payment->milestone;
+
         $payment->delete();
 
+        // Removing a payment can take a milestone back below its amount.
+        if ($milestone) {
+            $this->unsettleMilestone($milestone);
+        }
+
         return back()->with('success', 'Payment removed.');
+    }
+
+    /**
+     * Walk a milestone back from paid if its remaining payments no longer cover it.
+     */
+    private function unsettleMilestone(ContractMilestone $milestone): void
+    {
+        $paid = (float) $milestone->payments()->sum('amount');
+
+        if ($paid + 0.01 < (float) $milestone->amount && $milestone->status === 'paid') {
+            $milestone->update(['status' => $milestone->isBilled() ? 'invoiced' : 'pending']);
+        }
     }
 }

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('client_id')->constrained('clients')->onDelete('cascade');
             $table->string('name'); // Required - e.g. "Bahria Villa – Block C"
             $table->string('location')->nullable(); // Optional - site location
+            $table->decimal('covered_area_sqft', 12, 2)->nullable(); // A fact about the building, not about any one contract
             $table->enum('status', ['draft', 'active', 'completed', 'archived'])->default('draft');
             $table->timestamps();
 

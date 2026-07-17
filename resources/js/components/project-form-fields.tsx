@@ -6,6 +6,7 @@ export interface ProjectFormData {
     client_id: string;
     name: string;
     location: string;
+    covered_area_sqft: string;
     status: string;
     [key: string]: string;
 }
@@ -83,6 +84,26 @@ export default function ProjectFormFields({ data, setData, errors, clients }: Pr
             </div>
 
             <div className="space-y-2">
+                <Label htmlFor="covered_area_sqft">Covered Area (sqft)</Label>
+                <Input
+                    id="covered_area_sqft"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={data.covered_area_sqft}
+                    onChange={(e) => setData('covered_area_sqft', e.target.value)}
+                    placeholder="e.g. 2000"
+                    className={errors.covered_area_sqft ? 'border-red-500' : ''}
+                    autoComplete="off"
+                />
+                {errors.covered_area_sqft ? (
+                    <p className="text-sm text-red-500">{errors.covered_area_sqft}</p>
+                ) : (
+                    <p className="text-sm text-muted-foreground">The size of the building. Contracts are priced against this.</p>
+                )}
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="status">Status</Label>
                 <Select value={data.status} onValueChange={(value) => setData('status', value)}>
                     <SelectTrigger id="status" className={errors.status ? 'border-red-500' : ''}>

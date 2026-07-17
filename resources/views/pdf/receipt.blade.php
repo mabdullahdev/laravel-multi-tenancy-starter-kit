@@ -73,8 +73,8 @@
         <td class="value">{{ $receiptNo }}</td>
     </tr>
     <tr>
-        <td class="label">BOQ</td>
-        <td class="value">{{ $boq->title }} (Rev {{ $boq->revision }})</td>
+        <td class="label">Contract</td>
+        <td class="value">{{ $contract->title }}@if ($milestone) — {{ $milestone->name }}@endif</td>
         <td class="label">Issued</td>
         <td class="value">{{ $generatedAt }}</td>
     </tr>
@@ -113,7 +113,7 @@
 
 <table class="summary">
     <tr>
-        <td class="s-label">BOQ Total</td>
+        <td class="s-label">Contract Amount</td>
         <td class="s-value">{{ $currency }} {{ number_format((float) $total, 2) }}</td>
     </tr>
     <tr>
@@ -127,7 +127,7 @@
 </table>
 
 <div class="footnote">
-    This is a computer-generated receipt for the payment recorded against the above BOQ.
+    This is a computer-generated receipt for the payment recorded against the above contract.
     Thank you for your payment.
 </div>
 

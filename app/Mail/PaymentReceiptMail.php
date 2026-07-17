@@ -30,10 +30,10 @@ class PaymentReceiptMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        $boq = $this->payment->boq;
+        $contract = $this->payment->contract;
 
         return new Envelope(
-            subject: 'Payment Receipt — ' . $boq->title . ' (Rev ' . $boq->revision . ')',
+            subject: 'Payment Receipt — ' . $contract->project->name . ' (' . $contract->title . ')',
         );
     }
 
@@ -78,20 +78,21 @@ class PaymentReceiptMail extends Mailable implements ShouldQueue
     private function receiptData(): array
     {
         // Ensure the tree is loaded (runs inside the queue worker at send time).
-        $this->payment->loadMissing('boq.project.client', 'boq.payments');
+        $this->payment->loadMissing('contract.project.client', 'contract.payments', 'milestone');
 
-        $boq = $this->payment->boq;
+        $contract = $this->payment->contract;
 
         return [
             'payment' => $this->payment,
-            'boq' => $boq,
-            'project' => $boq->project,
-            'client' => $boq->project->client,
+            'contract' => $contract,
+            'milestone' => $this->payment->milestone,
+            'project' => $contract->project,
+            'client' => $contract->project->client,
             'companyName' => config('app.name'),
-            'currency' => $boq->currency,
-            'total' => $boq->total_amount,
-            'paid' => $boq->total_paid,
-            'due' => $boq->balance_due,
+            'currency' => $contract->currency,
+            'total' => $contract->contract_amount,
+            'paid' => $contract->total_paid,
+            'due' => $contract->balance_due,
             'generatedAt' => now()->format('d M Y'),
             'receiptNo' => $this->receiptNo(),
         ];

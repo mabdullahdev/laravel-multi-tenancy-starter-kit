@@ -11,7 +11,8 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'boq_id',
+        'contract_id',
+        'contract_milestone_id',
         'amount',
         'paid_on',
         'method',
@@ -25,10 +26,18 @@ class Payment extends Model
     ];
 
     /**
-     * Get the BOQ this payment is against.
+     * Get the contract this payment is against.
      */
-    public function boq(): BelongsTo
+    public function contract(): BelongsTo
     {
-        return $this->belongsTo(Boq::class);
+        return $this->belongsTo(Contract::class);
+    }
+
+    /**
+     * Get the milestone this payment settles, if it was against one.
+     */
+    public function milestone(): BelongsTo
+    {
+        return $this->belongsTo(ContractMilestone::class, 'contract_milestone_id');
     }
 }

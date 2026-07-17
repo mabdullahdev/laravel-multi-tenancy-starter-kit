@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Copy, Download, Eye, FileText, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Copy, Download, Eye, FileSignature, FileText, Pencil, Plus, Trash2 } from 'lucide-react';
 
 interface Boq {
     id: number;
@@ -18,10 +18,36 @@ interface Boq {
     total_amount: string | number;
 }
 
+interface ContractAddon {
+    id: number;
+    name: string;
+    unit: string;
+    quantity: string | number;
+    rate: string | number;
+    amount: string | number;
+}
+
+interface Contract {
+    id: number;
+    title: string;
+    type: string;
+    billable_area_sqft: string | null;
+    rate_per_sqft: string | null;
+    quality_tier: string | null;
+    base_amount: string | number;
+    addons_amount: string | number;
+    contract_amount: string | number;
+    currency: string;
+    signed_on: string | null;
+    status: string;
+    addons: ContractAddon[];
+}
+
 interface Project {
     id: number;
     name: string;
     location: string | null;
+    covered_area_sqft: string | null;
     status: string;
     client: {
         id: number;
@@ -30,6 +56,8 @@ interface Project {
         phone: string;
         email: string | null;
     };
+    contracts: Contract[];
+    contracts_total: string | number;
     boqs: Boq[];
 }
 
@@ -62,6 +90,8 @@ export default function ProjectShow({ project }: Props) {
 
     const deleteBoq = (boq: Boq) => router.delete(route('boqs.destroy', boq.id));
 
+    const deleteContract = (contract: Contract) => router.delete(route('contracts.destroy', contract.id));
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={project.name} />
@@ -93,6 +123,10 @@ export default function ProjectShow({ project }: Props) {
                             <p>{project.location || '—'}</p>
                         </div>
                         <div>
+                            <p className="font-medium text-muted-foreground">Covered Area</p>
+                            <p>{project.covered_area_sqft ? `${parseFloat(project.covered_area_sqft).toLocaleString()} sqft` : '—'}</p>
+                        </div>
+                        <div>
                             <p className="font-medium text-muted-foreground">Client</p>
                             <p>
                                 {project.client.name}
@@ -103,6 +137,115 @@ export default function ProjectShow({ project }: Props) {
                                 {project.client.email ? ` · ${project.client.email}` : ''}
                             </p>
                         </div>
+                    </CardContent>
+                </Card>
+
+                {/* Contracts — what the client owes for this project */}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between gap-2">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <FileSignature className="h-4 w-4" />
+                                Contracts
+                            </CardTitle>
+                            <Link href={route('contracts.create', project.id)}>
+                                <Button size="sm" className="gap-2">
+                                    <Plus className="h-4 w-4" />
+                                    New Contract
+                                </Button>
+                            </Link>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        {project.contracts.length === 0 ? (
+                            <p className="px-6 py-8 text-center text-muted-foreground">
+                                No contracts yet. Add one to record what the client is paying for this project.
+                            </p>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b text-left text-muted-foreground">
+                                            <th className="px-4 py-3 font-medium">Title</th>
+                                            <th className="px-4 py-3 font-medium">Terms</th>
+                                            <th className="px-4 py-3 font-medium">Signed</th>
+                                            <th className="px-4 py-3 font-medium">Status</th>
+                                            <th className="px-4 py-3 font-medium">Amount</th>
+                                            <th className="px-4 py-3 text-right font-medium">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {project.contracts.map((contract) => (
+                                            <tr key={contract.id} className="border-b last:border-0 hover:bg-muted/40">
+                                                <td className="px-4 py-3 font-medium">
+                                                    {contract.title}
+                                                    {contract.addons.length > 0 && (
+                                                        <ul className="mt-1 space-y-0.5 text-xs font-normal text-muted-foreground">
+                                                            {contract.addons.map((addon) => (
+                                                                <li key={addon.id}>
+                                                                    + {addon.name} · {formatMoney(addon.amount, contract.currency)}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 align-top text-muted-foreground">
+                                                    {contract.type === 'theka_per_sqft' && contract.rate_per_sqft
+                                                        ? `${parseFloat(contract.billable_area_sqft ?? '0').toLocaleString()} sqft × ${contract.currency} ${parseFloat(contract.rate_per_sqft).toLocaleString()}`
+                                                        : 'Dihari'}
+                                                </td>
+                                                <td className="px-4 py-3 text-muted-foreground">{contract.signed_on ?? '—'}</td>
+                                                <td className="px-4 py-3">
+                                                    <Badge variant={contract.status === 'draft' ? 'outline' : 'default'} className="capitalize">
+                                                        {contract.status}
+                                                    </Badge>
+                                                </td>
+                                                <td className="px-4 py-3 font-medium">{formatMoney(contract.contract_amount, contract.currency)}</td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <Link href={route('contracts.show', contract.id)}>
+                                                            <Button variant="ghost" size="sm" className="gap-1">
+                                                                <Eye className="h-3.5 w-3.5" />
+                                                                View
+                                                            </Button>
+                                                        </Link>
+                                                        <Link href={route('contracts.edit', contract.id)}>
+                                                            <Button variant="ghost" size="sm" className="gap-1">
+                                                                <Pencil className="h-3.5 w-3.5" />
+                                                                Edit
+                                                            </Button>
+                                                        </Link>
+                                                        <ConfirmDialog
+                                                            trigger={
+                                                                <Button variant="ghost" size="sm" className="gap-1 text-red-600 hover:text-red-700">
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            }
+                                                            title={`Delete "${contract.title}"?`}
+                                                            description="This permanently deletes the contract. This cannot be undone."
+                                                            confirmLabel="Delete"
+                                                            confirmVariant="destructive"
+                                                            onConfirm={() => deleteContract(contract)}
+                                                        />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr className="border-t bg-muted/30">
+                                            <td className="px-4 py-3 font-medium" colSpan={4}>
+                                                Total contracted
+                                            </td>
+                                            <td className="px-4 py-3 font-semibold">
+                                                {formatMoney(project.contracts_total, project.contracts[0].currency)}
+                                            </td>
+                                            <td />
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

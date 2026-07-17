@@ -44,7 +44,6 @@ class BoqExampleSeeder extends Seeder
             'currency' => 'PKR',
             'status' => 'finalized',
             'total_amount' => 0,
-            'payment_terms' => "40% advance with work order.\n40% at plinth level completion.\n20% on final completion & handover.",
             'notes' => 'Rates exclude sales tax. Water and electricity to be provided at site by client.',
         ]);
 

@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('currency', 3)->default('PKR'); // ISO currency code
             $table->enum('status', ['draft', 'finalized'])->default('draft');
             $table->decimal('total_amount', 15, 2)->default(0); // Denormalized sum of all item amounts
-            $table->text('payment_terms')->nullable(); // Client-specific terms shown on the PDF (advance %, milestones, etc.)
             $table->text('notes')->nullable();
             $table->timestamps();
 

@@ -1,4 +1,4 @@
-import ProjectFormFields, { type ClientOption, type ProjectFormData } from '@/components/project-form-fields';
+import ContractFormFields, { type ContractFormData, type ContractProject } from '@/components/contract-form-fields';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
@@ -6,32 +6,28 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus } from 'lucide-react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Projects', href: '/projects' },
-    { title: 'New Project', href: '/projects/create' },
-];
-
 interface Props {
-    clients: ClientOption[];
+    project: ContractProject;
+    contract: ContractFormData;
 }
 
-export default function CreateProject({ clients }: Props) {
-    const { data, setData, post, processing, errors } = useForm<ProjectFormData>({
-        client_id: '',
-        name: '',
-        location: '',
-        covered_area_sqft: '',
-        status: 'draft',
-    });
+export default function CreateContract({ project, contract }: Props) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Projects', href: '/projects' },
+        { title: project.name, href: `/projects/${project.id}` },
+        { title: 'New Contract', href: `/projects/${project.id}/contracts/create` },
+    ];
+
+    const { data, setData, post, processing, errors } = useForm<ContractFormData>(contract);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('projects.store'));
+        post(route('contracts.store', project.id));
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="New Project" />
+            <Head title="New Contract" />
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <div>
                     <Button variant="ghost" size="sm" onClick={() => window.history.back()} className="gap-2">
@@ -39,22 +35,30 @@ export default function CreateProject({ clients }: Props) {
                         Back
                     </Button>
                 </div>
-                <div className="mx-auto w-full max-w-2xl">
+                <div className="mx-auto w-full max-w-4xl">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Plus className="h-5 w-5" />
-                                New Project
+                                New Contract
                             </CardTitle>
-                            <CardDescription>Create a construction project for a client. You'll add BOQs next.</CardDescription>
+                            <CardDescription>
+                                The commercial agreement for {project.name}. A client may sign more than one — grey structure now,
+                                finishing later.
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-6">
-                                <ProjectFormFields data={data} setData={setData} errors={errors} clients={clients} />
+                                <ContractFormFields
+                                    data={data}
+                                    setData={setData}
+                                    errors={errors as Record<string, string>}
+                                    project={project}
+                                />
                                 <div className="flex gap-4">
-                                    <Button type="submit" disabled={processing || clients.length === 0} className="gap-2">
+                                    <Button type="submit" disabled={processing} className="gap-2">
                                         <Plus className="h-4 w-4" />
-                                        {processing ? 'Saving...' : 'Create Project'}
+                                        {processing ? 'Saving...' : 'Create Contract'}
                                     </Button>
                                     <Button type="button" variant="outline" onClick={() => window.history.back()}>
                                         Cancel

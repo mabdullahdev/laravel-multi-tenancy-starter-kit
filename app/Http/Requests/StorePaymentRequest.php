@@ -22,9 +22,11 @@ class StorePaymentRequest extends FormRequest
      */
     public function rules(): array
     {
+        $contract = $this->route('contract');
+
         // Cap the payment at the outstanding balance so total paid can never
-        // exceed the BOQ total.
-        $due = (float) $this->route('boq')->balance_due;
+        // exceed what the client agreed to.
+        $due = (float) $contract->balance_due;
 
         return [
             'amount' => ['required', 'numeric', 'min:0.01', 'max:' . $due],
@@ -32,6 +34,14 @@ class StorePaymentRequest extends FormRequest
             'method' => ['required', Rule::in(['cash', 'bank_transfer', 'cheque', 'online', 'other'])],
             'reference' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:255'],
+
+            // A payment may settle a scheduled stage, but need not — an ad-hoc
+            // payment has no milestone. Scoped to this contract's own schedule so
+            // a payment can't be attached to another contract's milestone.
+            'contract_milestone_id' => [
+                'nullable',
+                Rule::exists('contract_milestones', 'id')->where('contract_id', $contract->id),
+            ],
         ];
     }
 
@@ -42,14 +52,15 @@ class StorePaymentRequest extends FormRequest
      */
     public function messages(): array
     {
-        $boq = $this->route('boq');
+        $contract = $this->route('contract');
 
         return [
             'amount.required' => 'Enter the amount received.',
             'amount.min' => 'The amount must be greater than zero.',
             'amount.max' => 'The amount exceeds the outstanding balance of '
-                . $boq->currency . ' ' . number_format((float) $boq->balance_due, 2) . '.',
+                . $contract->currency . ' ' . number_format((float) $contract->balance_due, 2) . '.',
             'paid_on.required' => 'Enter the date the payment was received.',
+            'contract_milestone_id.exists' => 'That milestone does not belong to this contract.',
         ];
     }
 }

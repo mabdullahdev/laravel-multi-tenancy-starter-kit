@@ -21,8 +21,8 @@ class DatabaseSeeder extends Seeder
             'password' => env('CENTRAL_OWNER_PASSWORD', 'password'),
         ]);
 
-        $this->call([
-            BoqExampleSeeder::class,
-        ]);
+        // $this->call([
+        //     BoqExampleSeeder::class,
+        // ]);
     }
 }

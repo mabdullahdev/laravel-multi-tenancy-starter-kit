@@ -29,7 +29,6 @@ class UpdateBoqRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'currency' => ['nullable', 'string', 'size:3'],
             'status' => ['required', Rule::in(['draft', 'finalized'])],
-            'payment_terms' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
 
             'sections' => ['present', 'array'],

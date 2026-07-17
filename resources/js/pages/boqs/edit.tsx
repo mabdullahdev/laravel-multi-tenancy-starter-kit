@@ -29,7 +29,6 @@ interface Boq {
     revision: number;
     currency: string;
     status: string;
-    payment_terms: string;
     notes: string;
     project: { id: number; name: string; client_name: string | null };
     sections: {
@@ -86,14 +85,12 @@ export default function BoqEdit({ boq }: Props) {
         title: string;
         currency: string;
         status: string;
-        payment_terms: string;
         notes: string;
         sections: SectionForm[];
     }>({
         title: boq.title,
         currency: boq.currency,
         status: boq.status,
-        payment_terms: boq.payment_terms,
         notes: boq.notes,
         sections: boq.sections.map((s) => ({
             name: s.name,
@@ -199,16 +196,6 @@ export default function BoqEdit({ boq }: Props) {
                                     <SelectItem value="finalized">Finalized</SelectItem>
                                 </SelectContent>
                             </Select>
-                        </div>
-                        <div className="space-y-2 sm:col-span-2">
-                            <Label htmlFor="payment_terms">Payment Terms</Label>
-                            <Textarea
-                                id="payment_terms"
-                                rows={3}
-                                value={data.payment_terms}
-                                onChange={(e) => setData('payment_terms', e.target.value)}
-                                placeholder="e.g. 40% advance, 40% at plinth level, 20% on completion. Shown on the PDF."
-                            />
                         </div>
                         <div className="space-y-2 sm:col-span-2">
                             <Label htmlFor="notes">Notes</Label>

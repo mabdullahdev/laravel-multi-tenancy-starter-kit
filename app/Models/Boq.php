@@ -20,7 +20,6 @@ class Boq extends Model
         'currency',
         'status',
         'total_amount',
-        'payment_terms',
         'notes',
     ];
 
@@ -51,53 +50,6 @@ class Boq extends Model
     public function items(): HasManyThrough
     {
         return $this->hasManyThrough(BoqItem::class, BoqSection::class);
-    }
-
-    /**
-     * Get the payments received against this BOQ (newest first).
-     */
-    public function payments(): HasMany
-    {
-        return $this->hasMany(Payment::class)->orderByDesc('paid_on');
-    }
-
-    /**
-     * Total amount received against this BOQ.
-     */
-    public function getTotalPaidAttribute(): string
-    {
-        // Use the loaded relation if present to avoid an extra query, else sum in DB.
-        $paid = $this->relationLoaded('payments')
-            ? $this->payments->sum('amount')
-            : $this->payments()->sum('amount');
-
-        return number_format((float) $paid, 2, '.', '');
-    }
-
-    /**
-     * Outstanding balance: total minus what has been paid.
-     */
-    public function getBalanceDueAttribute(): string
-    {
-        $due = (float) $this->total_amount - (float) $this->total_paid;
-
-        return number_format($due, 2, '.', '');
-    }
-
-    /**
-     * Payment status derived from paid vs total.
-     */
-    public function getPaymentStatusAttribute(): string
-    {
-        $paid = (float) $this->total_paid;
-        $total = (float) $this->total_amount;
-
-        if ($paid <= 0) {
-            return 'unpaid';
-        }
-
-        // Treat within one paisa of the total as fully paid.
-        return $paid + 0.01 >= $total ? 'paid' : 'partial';
     }
 
     /**
